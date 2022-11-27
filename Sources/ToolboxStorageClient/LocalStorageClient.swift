@@ -9,7 +9,7 @@ import Foundation
 import GRDB
 
 public class LocalStorageClient<T> where T: LocalItem {
-    private let dbQueue: DatabaseQueue?
+    public let dbQueue: DatabaseQueue?
     
     public init(pathToSqlite: String? = nil) {
         if let dbFile = pathToSqlite {
