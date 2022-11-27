@@ -22,22 +22,22 @@ public class LocalStorageClient<T> where T: LocalItem {
     }
     
     public func save(item: T) throws {
-        try? dbQueue?.write({ db in
+        try dbQueue?.write({ db in
             if try T.fetchOne(db, key: item.id) == nil {
                 try item.insert(db)
             }
         })
     }
     
-    public func get(key: DatabaseValueConvertible) -> T? {
-        try? dbQueue?.read({ db in
-            try? T.fetchOne(db, key: key)
+    public func get(key: DatabaseValueConvertible) throws -> T? {
+        try dbQueue?.read({ db in
+            try T.fetchOne(db, key: key)
         })
     }
     
-    public func getAll() -> [T]? {
-        try? dbQueue?.read({ db in
-            try? T.fetchAll(db)
+    public func getAll() throws -> [T]? {
+        try dbQueue?.read({ db in
+            try T.fetchAll(db)
         })
     }
     
