@@ -24,10 +24,10 @@ public struct NoteStorage: LocalItem {
     }
     
     static func getAll() -> [NoteStorage]? {
-        return storage.getAll()
+        return try? storage.getAll()
     }
     
     static func get(key: DatabaseValueConvertible) -> NoteStorage? {
-        return storage.get(key: key)
+        return try? storage.get(key: key)
     }
 }
