@@ -9,8 +9,11 @@ import Foundation
 import GRDB
 
 public class LocalStorageClient<T> where T: LocalItem {
+    @Published public var items: [T]?
+
     public let dbQueue: DatabaseQueue?
-    
+    private var cancellable: AnyDatabaseCancellable?
+
     public init(pathToSqlite: String? = nil) {
         if let dbFile = pathToSqlite {
             dbQueue = try? DatabaseQueue(path: dbFile)
@@ -39,6 +42,21 @@ public class LocalStorageClient<T> where T: LocalItem {
         try dbQueue?.read({ db in
             try T.fetchAll(db)
         })
+    }
+
+    public func valueObservation() {
+        guard let dbQueue = dbQueue else { return }
+
+        let observation = ValueObservation.tracking(T.fetchAll).shared(in: dbQueue)
+        cancellable = observation.start { error in
+            // Handle error
+        } onChange: { (objects: [T]) in
+            self.items = objects
+        }
+    }
+
+    public func cancelObservation() {
+        cancellable?.cancel()
     }
     
     private func createMockTable() {

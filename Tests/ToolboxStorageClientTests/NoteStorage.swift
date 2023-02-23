@@ -18,16 +18,4 @@ public struct NoteStorage: LocalItem {
         self.id = id
         self.title = title
     }
-    
-    func saveNote() {
-        try? NoteStorage.storage.save(item: self)
-    }
-    
-    static func getAll() -> [NoteStorage]? {
-        return try? storage.getAll()
-    }
-    
-    static func get(key: DatabaseValueConvertible) -> NoteStorage? {
-        return try? storage.get(key: key)
-    }
 }
