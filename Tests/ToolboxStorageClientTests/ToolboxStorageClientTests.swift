@@ -25,10 +25,27 @@ final class ToolboxStorageClientTests: XCTestCase {
 
         let items = try storage.getAll()
         XCTAssertNotNil(items)
+        XCTAssertNotEqual(0, items?.count)
         
         let item = try storage.get(key: id)
         XCTAssertNotNil(item)
         XCTAssertEqual(id, item!.id)
+    }
+
+    func testSaveSQL() async throws {
+        let sql: String = """
+            INSERT INTO NoteStorage (id, title) VALUES
+        ('\(UUID().uuidString)', \("'Title'")),
+        ('\(UUID().uuidString)', \("'Title'")),
+        ('\(UUID().uuidString)', \("'Title'")),
+        ('\(UUID().uuidString)', \("'Title'"));
+        """
+        try storage.save(query: sql)
+
+        let items = try storage.getAll()
+        XCTAssertNotNil(items)
+
+        XCTAssertNotEqual(0, items?.count)
     }
 
     func testObservation() throws {
@@ -54,11 +71,37 @@ final class ToolboxStorageClientTests: XCTestCase {
         try storage.save(item: note1)
         try storage.save(item: note2)
 
-
         let countEmittedExpected: Int = 5
         let apodPublisher = storage.$items.collect(countEmittedExpected).first()
         let counterArray = try awaitPublisher(apodPublisher)
         XCTAssertEqual(countEmittedExpected, counterArray.count)
+    }
+
+    func testAsyncSave() async throws {
+        let id: UUID = UUID()
+        let title: String = "Random Title"
+        let note = NoteStorage(id: id, title: title)
+
+        let id1: UUID = UUID()
+        let title1: String = "Random Title"
+        let note1 = NoteStorage(id: id1, title: title1)
+
+        let id2: UUID = UUID()
+        let title2: String = "Random Title"
+        let note2 = NoteStorage(id: id2, title: title2)
+
+        try await storage.asyncSave(item: note)
+        try await storage.asyncSave(item: note1)
+        try await storage.asyncSave(item: note2)
+
+        let items = try storage.getAll()
+        XCTAssertNotNil(items)
+
+        XCTAssertNotEqual(0, items?.count)
+
+        XCTAssertEqual(items?[0].id, id)
+        XCTAssertEqual(items?[1].id, id1)
+        XCTAssertEqual(items?[2].id, id2)
     }
 }
 
