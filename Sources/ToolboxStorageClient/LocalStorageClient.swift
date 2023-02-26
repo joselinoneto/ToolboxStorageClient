@@ -23,13 +23,23 @@ public class LocalStorageClient<T> where T: LocalItem {
             createMockTable()
         }
     }
-    
+
+    public func save (query: String) throws {
+        try dbQueue?.write({ db in
+            try db.execute(sql: query)
+        })
+    }
+
     public func save(item: T) throws {
         try dbQueue?.write({ db in
-            if try T.fetchOne(db, key: item.id) == nil {
-                try item.insert(db)
-            }
+            try item.save(db)
         })
+    }
+
+    public func asyncSave(item: T) async throws {
+        dbQueue?.asyncWrite({ db in
+            try item.save(db)
+        }, completion: { _, _ in })
     }
     
     public func get(key: DatabaseValueConvertible) throws -> T? {
