@@ -24,7 +24,7 @@ public class LocalStorageClient<T> where T: LocalItem {
         }
     }
 
-    public func save (query: String) throws {
+    public func save(query: String) throws {
         try dbQueue?.write({ db in
             try db.execute(sql: query)
         })
