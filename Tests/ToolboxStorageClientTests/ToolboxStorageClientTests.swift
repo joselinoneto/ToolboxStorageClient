@@ -34,13 +34,9 @@ final class ToolboxStorageClientTests: XCTestCase {
 
     func testSaveSQL() async throws {
         let sql: String = """
-            INSERT INTO NoteStorage (id, title) VALUES
-        ('\(UUID().uuidString)', \("'Title'")),
-        ('\(UUID().uuidString)', \("'Title'")),
-        ('\(UUID().uuidString)', \("'Title'")),
-        ('\(UUID().uuidString)', \("'Title'"));
+            INSERT INTO NoteStorage (id, title) VALUES (?, ?);
         """
-        try storage.save(query: sql)
+        try await storage.save(query: sql, arguments: [UUID().uuidString, "Title"])
 
         let items = try storage.getAll()
         XCTAssertNotNil(items)
