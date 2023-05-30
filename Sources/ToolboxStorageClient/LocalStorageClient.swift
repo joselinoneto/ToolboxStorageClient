@@ -24,10 +24,10 @@ public class LocalStorageClient<T> where T: LocalItem {
         }
     }
 
-    public func save(query: String) throws {
-        try dbQueue?.write({ db in
-            try db.execute(sql: query)
-        })
+    public func save(query: String, arguments: StatementArguments) async throws {
+        dbQueue?.asyncWrite({ db in
+            try db.execute(sql: query, arguments: arguments)
+        }, completion: { _, _ in })
     }
 
     public func save(item: T) throws {
@@ -60,8 +60,8 @@ public class LocalStorageClient<T> where T: LocalItem {
         let observation = ValueObservation.tracking(T.fetchAll).shared(in: dbQueue)
         cancellable = observation.start { error in
             // Handle error
-        } onChange: { (objects: [T]) in
-            self.items = objects
+        } onChange: { [weak self] (objects: [T]) in
+            self?.items = objects
         }
     }
 
