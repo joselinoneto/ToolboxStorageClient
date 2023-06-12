@@ -7,18 +7,44 @@
 
 import Foundation
 import GRDB
+import OSLog
 
 public class LocalStorageClient<T> where T: LocalItem {
     @Published public var items: [T]?
 
-    public let dbQueue: DatabaseQueue?
+    private var _dbQueue: DatabaseQueue?
+    public var dbQueue: DatabaseQueue? {
+        get {
+            if _dbQueue != nil {
+                return _dbQueue
+            } else {
+                var config = Configuration()
+                config.prepareDatabase { db in
+                    db.trace() { [weak self] in
+                        self?.logger.info("SQL: \($0)")
+                    }
+                }
+                if let pathFile = pathFile {
+                    _dbQueue = try? DatabaseQueue(path: pathFile, configuration: config)
+                    return _dbQueue
+                } else {
+                    _dbQueue = try? DatabaseQueue()
+                    return _dbQueue
+                }
+            }
+        }
+        set {
+            _dbQueue = newValue
+        }
+    }
     private var cancellable: AnyDatabaseCancellable?
-
+    private let logger = Logger(subsystem: "ToolboxStorageCliente", category: "trace sql")
+    private var pathFile: String?
     public init(pathToSqlite: String? = nil) {
-        if let dbFile = pathToSqlite {
-            dbQueue = try? DatabaseQueue(path: dbFile)
-        } else {
-            // in memory
+        self.pathFile = pathToSqlite
+
+        // in memory
+        if pathToSqlite == nil {
             dbQueue = try? DatabaseQueue()
             createMockTable()
         }
@@ -34,6 +60,16 @@ public class LocalStorageClient<T> where T: LocalItem {
         try dbQueue?.write({ db in
             try item.save(db)
         })
+    }
+
+    public func saveItems(_ items: [T]) async throws {
+        dbQueue?.asyncWrite({ db in
+            for item in items {
+                if try T.fetchOne(db, key: item.id) == nil {
+                    try item.save(db)
+                }
+            }
+        }, completion: { _, _ in })
     }
 
     public func asyncSave(item: T) async throws {

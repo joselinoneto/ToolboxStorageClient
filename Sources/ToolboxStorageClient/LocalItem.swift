@@ -7,6 +7,6 @@
 
 import Foundation
 import GRDB
-public protocol LocalItem: Codable, FetchableRecord, PersistableRecord {
+public protocol LocalItem: Codable, Hashable, FetchableRecord, PersistableRecord {
     var id: UUID? { get set }
 }
