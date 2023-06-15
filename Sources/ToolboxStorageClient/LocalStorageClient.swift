@@ -90,6 +90,12 @@ public class LocalStorageClient<T> where T: LocalItem {
         })
     }
 
+    public func getFilter(_ filters: SQLSpecificExpressible) throws -> [T]? {
+        try dbQueue?.read({ db in
+            try T.filter(filters).fetchAll(db)
+        })
+    }
+
     public func valueObservation() {
         guard let dbQueue = dbQueue else { return }
 
