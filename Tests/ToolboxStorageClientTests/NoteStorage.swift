@@ -10,11 +10,11 @@ import ToolboxStorageClient
 import GRDB
 
 public struct NoteStorage: LocalItem {
-    public var id: UUID?
+    public var id: UUID
     public var title: String
     static var storage: LocalStorageClient<NoteStorage> = LocalStorageClient<NoteStorage>()
     
-    init(id: UUID? = nil, title: String) {
+    init(id: UUID, title: String) {
         self.id = id
         self.title = title
     }
