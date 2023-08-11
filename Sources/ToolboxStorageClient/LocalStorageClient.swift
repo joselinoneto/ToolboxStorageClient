@@ -9,6 +9,10 @@ import Foundation
 import GRDB
 import OSLog
 
+public extension Logger {
+    static let dataLog = Logger(subsystem: "group.app.zeneto.daily.apod", category: "ApodData")
+}
+
 public class LocalStorageClient<T> where T: LocalItem {
     @Published public var items: [T]?
 
@@ -20,9 +24,9 @@ public class LocalStorageClient<T> where T: LocalItem {
             } else {
                 var config = Configuration()
                 config.prepareDatabase { db in
-                    db.trace() { [weak self] in
-                        self?.logger.info("SQL: \($0)")
-                    }
+//                    db.trace() { item in
+//                        Logger.dataLog.trace("SQL: \(item.expandedDescription)")
+//                    }
                 }
                 if let pathFile = pathFile {
                     _dbQueue = try? DatabaseQueue(path: pathFile, configuration: config)
@@ -38,7 +42,6 @@ public class LocalStorageClient<T> where T: LocalItem {
         }
     }
     private var cancellable: AnyDatabaseCancellable?
-    private let logger = Logger(subsystem: "ToolboxStorageCliente", category: "trace sql")
     private var pathFile: String?
     public init(pathToSqlite: String? = nil) {
         self.pathFile = pathToSqlite
@@ -90,6 +93,12 @@ public class LocalStorageClient<T> where T: LocalItem {
         })
     }
 
+    public func deleteAllData() async throws {
+        dbQueue?.asyncWrite({ db in
+            try T.deleteAll(db)
+        }, completion: { _, _ in })
+    }
+
     public func getFilter(_ filters: SQLSpecificExpressible) throws -> [T]? {
         try dbQueue?.read({ db in
             try T.filter(filters).fetchAll(db)
@@ -101,7 +110,7 @@ public class LocalStorageClient<T> where T: LocalItem {
 
         let observation = ValueObservation.tracking(T.fetchAll).shared(in: dbQueue)
         cancellable = observation.start { error in
-            // Handle error
+            Logger.dataLog.error("SQL: \(error)")
         } onChange: { [weak self] (objects: [T]) in
             self?.items = objects
         }
