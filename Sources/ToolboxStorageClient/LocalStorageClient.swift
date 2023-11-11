@@ -24,9 +24,9 @@ public class LocalStorageClient<T> where T: LocalItem {
             } else {
                 var config = Configuration()
                 config.prepareDatabase { db in
-//                    db.trace() { item in
-//                        Logger.dataLog.trace("SQL: \(item.expandedDescription)")
-//                    }
+                    db.trace() { item in
+                        Logger.dataLog.trace("SQL: \(item.expandedDescription)")
+                    }
                 }
                 if let pathFile = pathFile {
                     _dbQueue = try? DatabaseQueue(path: pathFile, configuration: config)
@@ -61,7 +61,9 @@ public class LocalStorageClient<T> where T: LocalItem {
 
     public func save(item: T) throws {
         try dbQueue?.write({ db in
-            try item.save(db)
+            if try T.fetchOne(db, key: item.id) == nil {
+                try item.save(db)
+            }
         })
     }
 
@@ -77,7 +79,11 @@ public class LocalStorageClient<T> where T: LocalItem {
 
     public func asyncSave(item: T) async throws {
         dbQueue?.asyncWrite({ db in
-            try item.save(db)
+            do {
+                try item.save(db)
+            } catch {
+                Logger.dataLog.error("SAVE ERROR: \(error.localizedDescription)")
+            }
         }, completion: { _, _ in })
     }
     
@@ -91,6 +97,17 @@ public class LocalStorageClient<T> where T: LocalItem {
         try dbQueue?.read({ db in
             try T.fetchAll(db)
         })
+    }
+
+    public func getQuery(query: String, arguments: StatementArguments) throws -> [T]? {
+        do {
+            return try dbQueue?.read({ db in
+                try T.fetchAll(db, sql: query, arguments: arguments)
+            })
+        } catch {
+            print("Get Query Error: \(error.localizedDescription)")
+            throw error
+        }
     }
 
     public func deleteAllData() async throws {

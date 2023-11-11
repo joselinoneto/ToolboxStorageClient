@@ -8,5 +8,5 @@
 import Foundation
 import GRDB
 public protocol LocalItem: Codable, Hashable, FetchableRecord, PersistableRecord {
-    var id: UUID { get set }
+    var id: Int? { get set }
 }
